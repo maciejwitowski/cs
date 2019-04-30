@@ -1,5 +1,7 @@
 package algorithms.rpn
 
+import algorithms.rpn.Token.IntToken
+import algorithms.rpn.Token.Operator.*
 import java.util.*
 import kotlin.test.assertEquals
 
@@ -15,48 +17,54 @@ object Rpn {
   }
 
   private fun executeRpn(input: String): Int {
+    val tokens = input.split(" ").map { Parser.parse(it) }
     val stack = LinkedList<Int>()
 
-    input.split(" ").forEach {
-      val operator = Operator.fromSymbol(it)
-
-      if (operator != null) {
-        operator.execute(stack)
-      } else {
-        stack.push(Integer.parseInt(it))
+    tokens.forEach {
+      when (it) {
+        is Token.Operator -> it.execute(stack)
+        is Token.IntToken -> stack.push(it.value)
       }
     }
 
     if (stack.size == 1) return stack.pop() else throw IllegalStateException()
   }
+}
 
-  enum class Operator(val symbol: String, val execute: (LinkedList<Int>) -> Unit) {
-    PLUS("+", { stack ->
+sealed class Token {
+  sealed class Operator(val execute: (LinkedList<Int>) -> Unit) : Token() {
+    object Plus : Operator({ stack ->
       val right = stack.pop()
       val left = stack.pop()
       stack.push(left + right)
-    }),
-    MINUS("-", { stack ->
+    })
+
+    object Minus : Operator({ stack ->
       val right = stack.pop()
       val left = stack.pop()
       stack.push(left - right)
-    }),
-    MULTIPLY("*", { stack ->
+    })
+
+    object Multiply : Operator({ stack ->
       val right = stack.pop()
       val left = stack.pop()
       stack.push(left * right)
-    }),
-    DIVIDE("/", { stack ->
+    })
+
+    object Divide : Operator({ stack ->
       val right = stack.pop()
       val left = stack.pop()
       stack.push(left / right)
-    }),
-    DUP("DUP", { stack ->
+    })
+
+    object Dup : Operator({ stack ->
       val top = stack.pop()
       stack.push(top * 2)
-    }),
-    NOOP("NOOP", {}),
-    MAX("MAX", { stack ->
+    })
+
+    object Noop : Operator({})
+
+    object Max : Operator({ stack ->
       var count = stack.pop()
       var max = Int.MIN_VALUE
       while (count > 0) {
@@ -66,10 +74,22 @@ object Rpn {
       if (max != Int.MIN_VALUE) {
         stack.push(max)
       }
-    });
-
-    companion object {
-      fun fromSymbol(symbol: String) = values().find { it.symbol == symbol }
-    }
+    })
   }
+
+  class IntToken(val value: Int) : Token()
+}
+
+object Parser {
+  fun parse(char: String): Token =
+    when (char) {
+      "+" -> Plus
+      "-" -> Minus
+      "*" -> Multiply
+      "/" -> Divide
+      "DUP" -> Dup
+      "NOOP" -> Noop
+      "MAX" -> Max
+      else -> Integer.parseInt(char).let(::IntToken)
+    }
 }
