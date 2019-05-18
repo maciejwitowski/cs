@@ -5,30 +5,27 @@ import algorithms.rpn.Token.Operator.*
 import java.util.*
 import kotlin.test.assertEquals
 
-object Rpn {
-  @JvmStatic
-  fun main(args: Array<String>) {
-    assertEquals(executeRpn("2 3 +"), 5)
-    assertEquals(executeRpn("2 3 + 5 *"), 25)
-    assertEquals(executeRpn("12 2 3 4 * 10 5 / + * +"), 40)
-    assertEquals(executeRpn("2 3 + DUP"), 10)
-    assertEquals(executeRpn("2 3 + NOOP"), 5)
-    assertEquals(executeRpn("1 2 3 3 MAX"), 3)
-  }
+fun main() {
+  assertEquals(executeRpn("2 3 +"), 5)
+  assertEquals(executeRpn("2 3 + 5 *"), 25)
+  assertEquals(executeRpn("12 2 3 4 * 10 5 / + * +"), 40)
+  assertEquals(executeRpn("2 3 + DUP"), 10)
+  assertEquals(executeRpn("2 3 + NOOP"), 5)
+  assertEquals(executeRpn("1 2 3 3 MAX"), 3)
+}
 
-  private fun executeRpn(input: String): Int {
-    val tokens = input.split(" ").map { Parser.parse(it) }
-    val stack = LinkedList<Int>()
+private fun executeRpn(input: String): Int {
+  val tokens = input.split(" ").map { Parser.parse(it) }
+  val stack = LinkedList<Int>()
 
-    tokens.forEach {
-      when (it) {
-        is Token.Operator -> it.execute(stack)
-        is Token.IntToken -> stack.push(it.value)
-      }
+  tokens.forEach {
+    when (it) {
+      is Token.Operator -> it.execute(stack)
+      is Token.IntToken -> stack.push(it.value)
     }
-
-    if (stack.size == 1) return stack.pop() else throw IllegalStateException()
   }
+
+  if (stack.size == 1) return stack.pop() else throw IllegalStateException()
 }
 
 sealed class Token {
